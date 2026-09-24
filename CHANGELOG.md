@@ -1,5 +1,20 @@
 # Changelog
 
+## v1.1.0
+
+- Add error-returning counterparts to the `Blade` methods, so saw can be
+  embedded as a library without a failed API call killing the host process:
+  `LogGroups`, `LogStreams`, `Events` and `Stream`. The existing
+  `GetLogGroups`, `GetLogStreams`, `GetEvents` and `StreamEvents` are now thin
+  wrappers over them and keep the CLI behavior of printing the error and
+  exiting 2.
+- `Events` and `Stream` hand events to a callback rather than printing them,
+  and take a `context.Context`. `Stream` returns on cancellation instead of
+  looping forever.
+- Fix two panics in the streaming path on events with a nil `EventId` or
+  `Timestamp`.
+- Bump GitHub Actions to the Node 24 releases.
+
 ## v1.0.0
 
 - Upgrade from aws-sdk-go v1 to aws-sdk-go-v2. v1 reached end-of-support in

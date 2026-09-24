@@ -2,6 +2,7 @@ package blade
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/apppackio/saw/config"
@@ -103,5 +104,90 @@ func TestNewBladeWithConfig(t *testing.T) {
 	b := NewBladeWithConfig(aws.Config{Region: "us-east-1"}, &config.Configuration{}, nil)
 	if b == nil || b.cwl == nil {
 		t.Fatal("expected a Blade with a non-nil client")
+	}
+}
+
+// errClient fails every call, so the library methods must return the error
+// rather than exiting the process.
+type errClient struct{ err error }
+
+func (e *errClient) DescribeLogGroups(context.Context, *cloudwatchlogs.DescribeLogGroupsInput, ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.DescribeLogGroupsOutput, error) {
+	return nil, e.err
+}
+func (e *errClient) DescribeLogStreams(context.Context, *cloudwatchlogs.DescribeLogStreamsInput, ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.DescribeLogStreamsOutput, error) {
+	return nil, e.err
+}
+func (e *errClient) FilterLogEvents(context.Context, *cloudwatchlogs.FilterLogEventsInput, ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.FilterLogEventsOutput, error) {
+	return nil, e.err
+}
+
+func TestLibraryMethodsReturnErrors(t *testing.T) {
+	boom := errors.New("boom")
+	b := NewBladeWithClient(&errClient{err: boom}, &config.Configuration{}, nil)
+	ctx := context.Background()
+
+	if _, err := b.LogGroups(ctx); !errors.Is(err, boom) {
+		t.Errorf("LogGroups: expected boom, got %v", err)
+	}
+	if _, err := b.LogStreams(ctx); !errors.Is(err, boom) {
+		t.Errorf("LogStreams: expected boom, got %v", err)
+	}
+	if err := b.Events(ctx, func(types.FilteredLogEvent) error { return nil }); !errors.Is(err, boom) {
+		t.Errorf("Events: expected boom, got %v", err)
+	}
+	if err := b.Stream(ctx, func(types.FilteredLogEvent) error { return nil }); !errors.Is(err, boom) {
+		t.Errorf("Stream: expected boom, got %v", err)
+	}
+}
+
+// eventClient returns the same single event on every poll, so Stream must
+// deliver it once and suppress the repeats.
+type eventClient struct{ calls int }
+
+func (e *eventClient) DescribeLogGroups(context.Context, *cloudwatchlogs.DescribeLogGroupsInput, ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.DescribeLogGroupsOutput, error) {
+	return &cloudwatchlogs.DescribeLogGroupsOutput{}, nil
+}
+func (e *eventClient) DescribeLogStreams(context.Context, *cloudwatchlogs.DescribeLogStreamsInput, ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.DescribeLogStreamsOutput, error) {
+	return &cloudwatchlogs.DescribeLogStreamsOutput{}, nil
+}
+func (e *eventClient) FilterLogEvents(context.Context, *cloudwatchlogs.FilterLogEventsInput, ...func(*cloudwatchlogs.Options)) (*cloudwatchlogs.FilterLogEventsOutput, error) {
+	e.calls++
+	return &cloudwatchlogs.FilterLogEventsOutput{Events: []types.FilteredLogEvent{{
+		EventId:   aws.String("evt-1"),
+		Message:   aws.String("hello"),
+		Timestamp: aws.Int64(1000),
+	}}}, nil
+}
+
+func TestStreamDeliversEachEventOnce(t *testing.T) {
+	fake := &eventClient{}
+	b := NewBladeWithClient(fake, &config.Configuration{Group: "g"}, nil)
+
+	// fn stops the stream itself after the first delivery, so the test does
+	// not depend on the one-second poll interval.
+	var delivered []string
+	stop := errors.New("stop")
+	err := b.Stream(context.Background(), func(e types.FilteredLogEvent) error {
+		delivered = append(delivered, aws.ToString(e.Message))
+		return stop
+	})
+
+	if !errors.Is(err, stop) {
+		t.Fatalf("expected fn's error to propagate, got %v", err)
+	}
+	if len(delivered) != 1 {
+		t.Errorf("expected 1 delivery, got %d", len(delivered))
+	}
+}
+
+func TestStreamHonorsContextCancellation(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // already cancelled
+
+	b := NewBladeWithClient(&eventClient{}, &config.Configuration{Group: "g"}, nil)
+	err := b.Stream(ctx, func(types.FilteredLogEvent) error { return nil })
+
+	if !errors.Is(err, context.Canceled) {
+		t.Errorf("expected context.Canceled, got %v", err)
 	}
 }
