@@ -23,24 +23,6 @@ brew install saw
 
 ### Linux
 
-#### Arch Linux (source)
-
-```sh
-# Using pacaur
-pacaur -S saw
-
-# Using trizen
-trizen -S saw
-
-# Using yaourt
-yaourt -S saw
-
-# Using makepkg
-git clone https://aur.archlinux.org/saw.git
-cd saw
-makepkg -sri
-```
-
 #### Red Hat Based Distributions (Fedora/RHEL/CentOS/Amazon Linux)
 ```sh
 rpm -i <link_to_rpm_you_need_from_releases>
