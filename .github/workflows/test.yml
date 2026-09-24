@@ -1,0 +1,54 @@
+name: test
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Verify go.mod and go.sum are tidy
+        run: |
+          go mod tidy
+          git diff --exit-code -- go.mod go.sum
+
+      - run: go build ./...
+      - run: go vet ./...
+      - run: go test -race ./...
+
+  # Catches breakage on the platforms .goreleaser.yml ships, without
+  # waiting for a tag to find out.
+  cross-compile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build all release targets
+        env:
+          CGO_ENABLED: "0"
+        run: |
+          for target in \
+            darwin/amd64 darwin/arm64 \
+            linux/amd64 linux/arm64 linux/arm \
+            freebsd/amd64 freebsd/arm64 freebsd/arm
+          do
+            echo "==> $target"
+            GOOS="${target%/*}" GOARCH="${target#*/}" go build -o /dev/null .
+          done

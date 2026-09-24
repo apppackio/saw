@@ -1,48 +1,76 @@
+version: 2
+
+project_name: saw
+
+before:
+  hooks:
+    - go mod download
+
 builds:
-  - binary: saw
+  - id: saw
+    binary: saw
+    main: .
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
     goos:
       - darwin
       - linux
       - freebsd
     goarch:
       - amd64
-      - arm
       - arm64
+      - arm
     goarm:
-      - 6
-      - 7
-    env:
-      - CGO_ENANBLED=0
+      - "6"
+      - "7"
+    ignore:
+      # darwin dropped 32-bit arm long ago
+      - goos: darwin
+        goarch: arm
 
-archive:
-  format: tar.gz
-  files:
-    - LICENSE
+archives:
+  - id: saw
+    formats:
+      - tar.gz
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+      {{- with .Arm }}v{{ . }}{{ end }}
+    files:
+      - LICENSE
+      - README.md
+      - CHANGELOG.md
 
-brew:
-  name: saw
+nfpms:
+  - id: saw
+    package_name: saw
+    vendor: Lincoln Loop
+    homepage: https://github.com/apppackio/saw
+    maintainer: Peter Baumgartner <pete@lincolnloop.com>
+    description: Fast, multipurpose tool for AWS CloudWatch Logs
+    license: MIT
+    formats:
+      - deb
+      - rpm
 
+checksum:
+  name_template: checksums.txt
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+
+release:
   github:
-    owner: TylerBrock
-    name: homebrew-saw
-
-  commit_author:
-    name: TylerBrock
-    email: tyler.brock@gmail.com
-
-  folder: Formula
-  homepage: "https://github.com/TylerBrock/saw"
-  description: "Fast, multipurpose tool for AWS CloudWatch Logs"
-
-git:
-  short_hash: true
-
-nfpm:
-  vendor: Tyler Brock
-  homepage: https://github.com/TylerBrock/saw
-  maintainer: Tyler Brock <tyler.brock@gmail.com>
-  description: Fast, multipurpose tool for AWS CloudWatch Logs
-  license: MIT
-  formats:
-    - deb
-    - rpm
+    owner: apppackio
+    name: saw
