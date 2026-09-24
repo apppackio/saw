@@ -6,12 +6,6 @@
 
 [![test](https://github.com/apppackio/saw/actions/workflows/test.yml/badge.svg)](https://github.com/apppackio/saw/actions/workflows/test.yml)
 
-## Run from Docker
-
-```sh
-docker run --rm -it -v ~/.aws:$HOME/.aws tbrock/saw
-```
-
 ## Installation
 
 ### macOS

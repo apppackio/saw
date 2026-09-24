@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/TylerBrock/colorjson"
-	"github.com/TylerBrock/saw/config"
+	"github.com/apppackio/saw/config"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"

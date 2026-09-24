@@ -1,5 +1,5 @@
 FROM golang:alpine as build
-WORKDIR $GOPATH/src/github.com/TylerBrock/saw
+WORKDIR /src
 
 # Add ca-certificates for TLS/SSL
 RUN apk add --no-cache git ca-certificates

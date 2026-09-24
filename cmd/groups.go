@@ -3,8 +3,8 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/TylerBrock/saw/blade"
-	"github.com/TylerBrock/saw/config"
+	"github.com/apppackio/saw/blade"
+	"github.com/apppackio/saw/config"
 	"github.com/spf13/cobra"
 )
 
