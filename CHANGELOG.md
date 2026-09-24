@@ -1,5 +1,17 @@
 # Changelog
 
+## v1.0.0
+
+- Upgrade from aws-sdk-go v1 to aws-sdk-go-v2. v1 reached end-of-support in
+  July 2025.
+- Drop the deprecated `interleaved` parameter on FilterLogEvents. AWS has
+  ignored it and assumed true since June 17, 2019.
+- Fix a nil dereference when sorting streams: a log stream that has never
+  received an event has no LastEventTimestamp and used to panic the comparator.
+  Such streams now sort last.
+- Remove AUR packaging, which was pinned to the 2019 dep-era release.
+- Minimum Go version is now 1.24.
+
 ## v0.2.2
 
  - Added support for parsing additonal time formats (@andrewpage)
