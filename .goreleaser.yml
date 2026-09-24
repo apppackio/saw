@@ -74,3 +74,26 @@ release:
   github:
     owner: apppackio
     name: saw
+
+homebrew_casks:
+  - name: saw
+    repository:
+      owner: apppackio
+      name: homebrew-saw
+      # The default GITHUB_TOKEN only reaches this repo, so publishing to
+      # the tap needs a PAT with contents:write on apppackio/homebrew-saw.
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    homepage: https://github.com/apppackio/saw
+    description: Fast, multipurpose tool for AWS CloudWatch Logs
+    license: MIT
+    commit_author:
+      name: apppack-bot
+      email: noreply@apppack.io
+    hooks:
+      post:
+        # The release binaries are unsigned, so macOS quarantines them and
+        # Gatekeeper refuses to run them. Strip the attribute on install.
+        install: |
+          if system_command("/usr/bin/xattr", args: ["-h"]).exit_status == 0
+            system_command "/usr/bin/xattr", args: ["-dr", "com.apple.quarantine", "#{staged_path}/saw"]
+          end

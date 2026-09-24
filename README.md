@@ -4,7 +4,7 @@
 
 ![Saw Gif](https://media.giphy.com/media/3fiohCfMJAKf7lhnPp/giphy.gif)
 
-[![Go Report Card](https://goreportcard.com/badge/github.com/TylerBrock/saw)](https://goreportcard.com/report/github.com/TylerBrock/saw)
+[![test](https://github.com/apppackio/saw/actions/workflows/test.yml/badge.svg)](https://github.com/apppackio/saw/actions/workflows/test.yml)
 
 ## Run from Docker
 
@@ -14,11 +14,10 @@ docker run --rm -it -v ~/.aws:$HOME/.aws tbrock/saw
 
 ## Installation
 
-### Mac OS X
+### macOS
 
 ```sh
-brew tap TylerBrock/saw
-brew install saw
+brew install --cask apppackio/saw/saw
 ```
 
 ### Linux
@@ -34,20 +33,17 @@ wget <link_to_deb_you_need_from_releases>
 sudo dpkg -i <the_deb_name>
 ```
 
-### Manual Install/Update
+### From source
 
-- [Install go](https://golang.org/doc/install)
-- Configure your `GOPATH` and add `$GOPATH/bin` to your path
-- Run `go get -u github.com/TylerBrock/saw`
+Requires [Go](https://go.dev/doc/install) 1.24 or newer.
 
-#### Windows Specifics
+```sh
+git clone https://github.com/apppackio/saw.git
+cd saw
+go build -o saw .
+```
 
-- Add %GOPATH%/bin to your path (optional)
-- Run from gopath/bin (If not in your path)
-    ```DOS .bat
-    cd %GOPATH%/bin
-    saw ...
-    ```
+Then move the `saw` binary somewhere on your `PATH`.
 
 ## Usage
 

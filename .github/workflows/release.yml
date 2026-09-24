@@ -29,3 +29,8 @@ jobs:
           args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # The default GITHUB_TOKEN is scoped to this repo only, so
+          # publishing the Homebrew cask to apppackio/homebrew-saw needs a
+          # separate PAT with contents:write on that repo. Releases will
+          # fail without it.
+          HOMEBREW_TAP_GITHUB_TOKEN: ${{ secrets.HOMEBREW_TAP_GITHUB_TOKEN }}
