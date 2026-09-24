@@ -10,6 +10,10 @@
   received an event has no LastEventTimestamp and used to panic the comparator.
   Such streams now sort last.
 - Remove AUR packaging, which was pinned to the 2019 dep-era release.
+- Add `blade.NewBladeWithConfig` and `blade.NewBladeWithClient` so saw can be
+  embedded as a library without reaching into unexported fields. The `cwl`
+  field is now a `blade.CloudWatchLogsClient` interface, so a fake can be
+  injected in tests.
 - Minimum Go version is now 1.24.
 
 ## v0.2.2

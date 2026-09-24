@@ -18,12 +18,21 @@ import (
 	"github.com/fatih/color"
 )
 
+// CloudWatchLogsClient is the subset of the CloudWatch Logs API that a Blade
+// uses. *cloudwatchlogs.Client satisfies it, and so can a fake, which makes
+// a Blade testable without reaching AWS.
+type CloudWatchLogsClient interface {
+	cloudwatchlogs.DescribeLogGroupsAPIClient
+	cloudwatchlogs.DescribeLogStreamsAPIClient
+	cloudwatchlogs.FilterLogEventsAPIClient
+}
+
 // A Blade is a Saw execution instance
 type Blade struct {
 	config *config.Configuration
 	aws    *config.AWSConfiguration
 	output *config.OutputConfiguration
-	cwl    *cloudwatchlogs.Client
+	cwl    CloudWatchLogsClient
 }
 
 // NewBlade creates a new Blade with CloudWatchLogs instance from provided config
@@ -59,6 +68,39 @@ func NewBlade(
 	blade.output = outputConfig
 
 	return &blade
+}
+
+// NewBladeWithClient creates a Blade backed by an existing CloudWatch Logs
+// client, rather than building one from the ambient AWS configuration the way
+// NewBlade does. Use it when embedding saw in another program that already has
+// a configured client, or to supply a fake in tests.
+//
+// outputConfig may be nil for the commands that do not format events
+// (GetLogGroups and GetLogStreams).
+func NewBladeWithClient(
+	cwl CloudWatchLogsClient,
+	config *config.Configuration,
+	outputConfig *config.OutputConfiguration,
+) *Blade {
+	return &Blade{
+		cwl:    cwl,
+		config: config,
+		output: outputConfig,
+	}
+}
+
+// NewBladeWithConfig creates a Blade from an existing aws.Config, rather than
+// loading one from the environment the way NewBlade does. Use it when
+// embedding saw in a program that has already built its AWS configuration.
+//
+// outputConfig may be nil for the commands that do not format events
+// (GetLogGroups and GetLogStreams).
+func NewBladeWithConfig(
+	awsCfg aws.Config,
+	config *config.Configuration,
+	outputConfig *config.OutputConfiguration,
+) *Blade {
+	return NewBladeWithClient(cloudwatchlogs.NewFromConfig(awsCfg), config, outputConfig)
 }
 
 // GetLogGroups gets the log groups from AWS given the blade configuration
